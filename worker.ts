@@ -13,3 +13,16 @@ const fileWorker = new Worker("file-events", async (job: Job) => {
 }, {
     connection,
 });
+
+
+const scanWorker = new Worker("scan-operations", async (job: Job) => {
+    if (job.name === "scan-init") {
+        console.log(`Scanning ${job.data.path}`);
+        console.log(`Ignored:`, job.data.ignored);
+        // TODO: Implement scan-init logic
+        return "Scan completed";
+    }
+    return "Scan operation not supported";
+}, {
+    connection,
+});

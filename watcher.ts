@@ -1,31 +1,47 @@
 // Script for watching files and event producer
 
 import chokidar from "chokidar";
-import { Job, Queue, QueueEvents } from "bullmq";
+import { Queue, QueueEvents } from "bullmq";
+import { getScanPaths } from "./writer";
+
 const fileQueue = new Queue("file-events");
 
-const watcher = chokidar.watch("./test", {
-    persistent: true,
-})
+const scanPaths = await getScanPaths();
+const activeScans = scanPaths.filter((s) => s.active);
 
-// Listen for file add events
-watcher.on("add", async (path, stats) => {
-    await fileQueue.add("file-add", {
-        path,
-        stats,
-        event: "add",
+const watchers = activeScans.map((scan) => {
+    const watcher = chokidar.watch(scan.path, {
+        persistent: true,
+        ignored: scan.ignored || [],
+    });
+
+    watcher.on("error", (error) => {
+        console.error(`Error watching ${scan.path}:`, error);
+    });
+
+    return { scanId: scan.id, path: scan.path, watcher };
+});
+
+watchers.forEach(({ watcher, scanId }) => {
+    watcher.on("add", async (path, stats) => {
+        await fileQueue.add("file-add", {
+            scanId,
+            path,
+            stats,
+            event: "add",
+        });
     });
 });
 
-// Listen for file change events
-watcher.on("change", async (path, stats) => {
-    await fileQueue.add("file-change", {
-        path,
-        stats,
-        event: "change",
+watchers.forEach(({ watcher, scanId }) => {
+    watcher.on("change", async (path, stats) => {
+        await fileQueue.add("file-change", {
+            scanId,
+            path,
+            stats,
+        });
     });
-})
-
+});
 
 
 // Queue Events
