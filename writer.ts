@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { scansTable } from './db/schema';
 import { Queue } from 'bullmq';
@@ -10,13 +11,13 @@ const scanQueue = new Queue("scan-operations");
 interface AddScanPathsProps {
     path: string;
     ignored: string[];
-    active: boolean;
 }
 // Write scaned file to database
 export async function addScanPaths(props: AddScanPathsProps[]) {
     const scans: typeof scansTable.$inferInsert[] = props.map((prop) => ({
         path: prop.path,
-        active: prop.active,
+        active: false,
+        status: "pending",
         ignored: prop.ignored,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -41,8 +42,14 @@ export async function getScanPaths() {
     return result;
 }
 
+// Update scan path status and active
+export async function updateScanPathStatus(scanId: number, status: string, active: boolean) {
+    const result = await db.update(scansTable).set({ status, active }).where(eq(scansTable.id, scanId));
+    return result;
+}
+
 // addScanPaths([{
-//     path: "C:\\Users\\murta\\Documents\\Book",
+//     path: "/mnt/c/Users/murta/Documents/Obsidian/Keepsake",
 //     ignored: [],
 //     active: true,
 // }]);

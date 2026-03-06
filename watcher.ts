@@ -13,6 +13,8 @@ const watchers = activeScans.map((scan) => {
     const watcher = chokidar.watch(scan.path, {
         persistent: true,
         ignored: scan.ignored || [],
+        depth: 0,
+        ignoreInitial: true,
     });
 
     watcher.on("error", (error) => {
@@ -22,6 +24,8 @@ const watchers = activeScans.map((scan) => {
     return { scanId: scan.id, path: scan.path, watcher };
 });
 
+const FILE_ADD_DELAY_MS = 60_000;
+
 watchers.forEach(({ watcher, scanId }) => {
     watcher.on("add", async (path, stats) => {
         await fileQueue.add("file-add", {
@@ -29,6 +33,8 @@ watchers.forEach(({ watcher, scanId }) => {
             path,
             stats,
             event: "add",
+        }, {
+            delay: FILE_ADD_DELAY_MS,
         });
     });
 });
@@ -44,7 +50,7 @@ watchers.forEach(({ watcher, scanId }) => {
 });
 
 
-// Queue Events
+// File Queue Events
 const fileQueueEvents = new QueueEvents("file-events");
 
 // Completed Event
@@ -58,3 +64,4 @@ fileQueueEvents.on("waiting", (job) => {
     console.log(`Job waiting`, job);
 
 })
+
