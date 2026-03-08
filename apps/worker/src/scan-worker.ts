@@ -65,21 +65,21 @@ export const scanWorker = new Worker(
     console.log("Directories:", directories);
     console.log("Ignored entries:", ignoredEntries);
 
-    for (const fileName of files) {
-      const filePath = join(job.data.path, fileName);
-      await fileQueue.add(
-        "file-add",
-        {
-          scanId: job.data.scanId,
-          path: filePath,
-          event: "init",
-        },
-        {
-          delay: FILE_ADD_DELAY_MS,
-        },
-      );
-      console.log(`Enqueued file-add (delayed ${FILE_ADD_DELAY_MS}ms) for ${filePath}`);
-    }
+    // for (const fileName of files) {
+    //   const filePath = join(job.data.path, fileName);
+    //   await fileQueue.add(
+    //     "file-add",
+    //     {
+    //       scanId: job.data.scanId,
+    //       path: filePath,
+    //       event: "init",
+    //     },
+    //     {
+    //       delay: FILE_ADD_DELAY_MS,
+    //     },
+    //   );
+    //   console.log(`Enqueued file-add (delayed ${FILE_ADD_DELAY_MS}ms) for ${filePath}`);
+    // }
 
     await updateScanPathStatus(job.data.scanId, "ready", true);
 

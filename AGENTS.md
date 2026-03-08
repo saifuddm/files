@@ -2,7 +2,7 @@
 
 ## Project Snapshot
 
-This project is a way for users to interact with their current file system with more data. Getting the context of files and folders is the pivotal piece which then allows for better searching, linking files together by relevancy and better organization of files and folders.
+This project is a user virtual file system for interacting with their current files with more data. Getting the context of files and folders is the pivotal piece which then allows for better searching, linking files together by relevancy and better organization of files and folders.
 
 This repository is a VERY EARLY WIP. Proposing sweeping changes that improve long-term maintainability is encouraged.
 

@@ -12,6 +12,7 @@ const fileQueue = new Queue<FileAddJobData | FileChangeJobData>(FILE_EVENTS_QUEU
 
 const scanPaths = await getScanPaths();
 const activeScans = scanPaths.filter((scan) => scan.active);
+console.log("Active scans:", activeScans);
 
 const watchers = activeScans.map((scan) => {
   const watcher = chokidar.watch(scan.path, {
@@ -30,6 +31,7 @@ const watchers = activeScans.map((scan) => {
 
 watchers.forEach(({ watcher, scanId }) => {
   watcher.on("add", async (path, stats) => {
+    console.log("File added:", path);
     await fileQueue.add(
       "file-add",
       {
@@ -47,6 +49,7 @@ watchers.forEach(({ watcher, scanId }) => {
 
 watchers.forEach(({ watcher, scanId }) => {
   watcher.on("change", async (path, stats) => {
+    console.log("File changed:", path);
     await fileQueue.add("file-change", {
       scanId,
       path,
