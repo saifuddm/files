@@ -145,10 +145,38 @@ export const fileWorker = new Worker(
         return { path: filePath, event: "change", missing: true };
       }
 
+      let fileStats;
+      try {
+        fileStats = await stat(filePath);
+        updateFileObservedMetadata({
+          fileId: fileEntry.id,
+          updates: {
+            sizeBytes: fileStats.size,
+            lastModifiedAt: getLastModifiedAt(fileStats),
+          },
+        });
+      } catch (error) {
+        console.error(`[file-change] Could not stat ${filePath}:`, error);
+        await markFileEnhancementFailed(fileEntry.id, "unreadable");
+        return { path: filePath, summary: null, error: "unreadable" };
+      }
+
+      let fileContent: Buffer;
+      try {
+        fileContent = await readFile(filePath);
+      } catch (error) {
+        console.error(`[file-change] Could not read ${filePath}:`, error);
+        await markFileEnhancementFailed(fileEntry.id, "unreadable");
+        return { path: filePath, summary: null, error: "unreadable" };
+      }
+
+      const contentHash = createContentHash(fileContent);
+
       await updateFileObservedMetadata({
         fileId: fileEntry.id,
         updates: {
-          lastModifiedAt: new Date(),
+          contentHash,
+          lastModifiedAt: getLastModifiedAt(fileStats),
         },
       });
 
