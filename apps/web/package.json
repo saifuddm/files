@@ -1,0 +1,9 @@
+{
+  "name": "@files/web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun -e \"console.log('apps/web is a placeholder for the future Next.js app.')\"",
+    "typecheck": "bunx tsc -p tsconfig.json --noEmit"
+  }
+}

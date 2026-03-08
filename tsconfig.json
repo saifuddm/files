@@ -5,14 +5,18 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleDetection": "force",
-    "jsx": "react-jsx",
-    "allowJs": true,
+    "allowJs": false,
 
     // Bundler mode
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@files/shared": ["./packages/shared/src/index.ts"],
+      "@files/db": ["./packages/db/src/index.ts"]
+    },
 
     // Best practices
     "strict": true,
@@ -24,5 +28,10 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
-  }
+  },
+  "include": [
+    "apps/**/*.ts",
+    "packages/**/*.ts",
+    "drizzle.config.ts"
+  ]
 }
