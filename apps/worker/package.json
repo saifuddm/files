@@ -11,7 +11,12 @@
     "@files/db": "workspace:*",
     "@files/shared": "workspace:*",
     "bullmq": "^5.70.1",
+    "file-type": "^21.3.0",
     "ioredis": "^5.8.1",
+    "mime-types": "^3.0.2",
     "ollama": "^0.6.3"
+  },
+  "devDependencies": {
+    "@types/mime-types": "^3.0.1"
   }
 }

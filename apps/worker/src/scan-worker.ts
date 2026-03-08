@@ -2,7 +2,7 @@ import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { Job, Queue, Worker } from "bullmq";
 import IORedis from "ioredis";
-import { updateScanPathStatus } from "@files/db";
+import { discoverChildScans, updateScanPathStatus } from "@files/db";
 import {
   FILE_ADD_DELAY_MS,
   FILE_EVENTS_QUEUE_NAME,
@@ -15,7 +15,9 @@ const connection = new IORedis({
   maxRetriesPerRequest: null,
 });
 
-const fileQueue = new Queue<FileAddJobData>(FILE_EVENTS_QUEUE_NAME, { connection });
+const fileQueue = new Queue<FileAddJobData>(FILE_EVENTS_QUEUE_NAME, {
+  connection,
+});
 
 export const scanWorker = new Worker(
   SCAN_OPERATIONS_QUEUE_NAME,
@@ -24,23 +26,28 @@ export const scanWorker = new Worker(
       return "Scan operation not supported";
     }
 
+    await updateScanPathStatus(job.data.scanId, "scanning", false);
+
     console.log(`Scanning ${job.data.path}`);
     console.log("Ignored:", job.data.ignored);
 
     const entries = await readdir(job.data.path, { withFileTypes: true });
-    const ignoredPatterns: RegExp[] = (job.data.ignored ?? []).flatMap((pattern: string) => {
-      try {
-        return [new RegExp(pattern)];
-      } catch (error) {
-        console.warn(`Invalid ignored pattern: ${pattern}`, error);
-        return [];
-      }
-    });
+    const ignoredPatterns: RegExp[] = (job.data.ignored ?? []).flatMap(
+      (pattern: string) => {
+        try {
+          return [new RegExp(pattern)];
+        } catch (error) {
+          console.warn(`Invalid ignored pattern: ${pattern}`, error);
+          return [];
+        }
+      },
+    );
 
     const entryDetails = entries.map((entry) => {
       const entryPath = join(job.data.path, entry.name);
       const ignored = ignoredPatterns.some(
-        (pattern: RegExp) => pattern.test(entry.name) || pattern.test(entryPath),
+        (pattern: RegExp) =>
+          pattern.test(entry.name) || pattern.test(entryPath),
       );
 
       return {
@@ -65,21 +72,30 @@ export const scanWorker = new Worker(
     console.log("Directories:", directories);
     console.log("Ignored entries:", ignoredEntries);
 
-    // for (const fileName of files) {
-    //   const filePath = join(job.data.path, fileName);
-    //   await fileQueue.add(
-    //     "file-add",
-    //     {
-    //       scanId: job.data.scanId,
-    //       path: filePath,
-    //       event: "init",
-    //     },
-    //     {
-    //       delay: FILE_ADD_DELAY_MS,
-    //     },
-    //   );
-    //   console.log(`Enqueued file-add (delayed ${FILE_ADD_DELAY_MS}ms) for ${filePath}`);
-    // }
+    await discoverChildScans({
+      parentScanId: job.data.scanId,
+      parentPath: job.data.path,
+      ignored: job.data.ignored ?? [],
+      directoryNames: directories,
+    });
+
+    for (const fileName of files) {
+      const filePath = join(job.data.path, fileName);
+      await fileQueue.add(
+        "file-add",
+        {
+          scanId: job.data.scanId,
+          path: filePath,
+          event: "init",
+        },
+        {
+          delay: FILE_ADD_DELAY_MS,
+        },
+      );
+      console.log(
+        `Enqueued file-add (delayed ${FILE_ADD_DELAY_MS}ms) for ${filePath}`,
+      );
+    }
 
     await updateScanPathStatus(job.data.scanId, "ready", true);
 

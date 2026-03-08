@@ -15,6 +15,13 @@ export interface FileAddJobData {
 export interface FileChangeJobData {
   scanId: number;
   path: string;
-  event?: "change";
+  event: "change";
+  stats?: unknown;
+}
+
+export interface FileRemoveJobData {
+  scanId: number;
+  path: string;
+  event: "unlink";
   stats?: unknown;
 }
