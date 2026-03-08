@@ -1,10 +1,12 @@
-// Worker for sending files to Ollama and getting AI summaries
-
 import { readFile } from "node:fs/promises";
-import type { Job } from "bullmq";
+import { Job, Worker } from "bullmq";
 import IORedis from "ioredis";
-import { Worker } from "bullmq";
 import { Ollama } from "ollama";
+import {
+  FILE_EVENTS_QUEUE_NAME,
+  type FileAddJobData,
+  type FileChangeJobData,
+} from "@files/shared";
 
 const ollama = new Ollama();
 
@@ -12,18 +14,20 @@ const connection = new IORedis({
   maxRetriesPerRequest: null,
 });
 
-const fileWorker = new Worker(
-  "file-events",
-  async (job: Job) => {
+type FileEventJobData = FileAddJobData | FileChangeJobData;
+
+export const fileWorker = new Worker(
+  FILE_EVENTS_QUEUE_NAME,
+  async (job: Job<FileEventJobData>) => {
     if (job.name === "file-add") {
-      const filePath: string = job.data.path;
+      const filePath = job.data.path;
       console.log(`[file-add] Processing ${filePath} (source: ${job.data.event})`);
 
       let fileContent: string;
       try {
         fileContent = await readFile(filePath, "utf-8");
-      } catch (err) {
-        console.error(`[file-add] Could not read ${filePath}:`, err);
+      } catch (error) {
+        console.error(`[file-add] Could not read ${filePath}:`, error);
         return { path: filePath, summary: null, error: "unreadable" };
       }
 
@@ -64,4 +68,3 @@ const fileWorker = new Worker(
     connection,
   },
 );
-

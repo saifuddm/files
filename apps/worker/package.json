@@ -1,0 +1,17 @@
+{
+  "name": "@files/worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "scratch": "bun run src/scratch.ts",
+    "typecheck": "bunx tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@files/db": "workspace:*",
+    "@files/shared": "workspace:*",
+    "bullmq": "^5.70.1",
+    "ioredis": "^5.8.1",
+    "ollama": "^0.6.3"
+  }
+}

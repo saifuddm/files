@@ -1,0 +1,15 @@
+{
+  "name": "@files/watcher",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "typecheck": "bunx tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@files/db": "workspace:*",
+    "@files/shared": "workspace:*",
+    "bullmq": "^5.70.1",
+    "chokidar": "^5.0.0"
+  }
+}

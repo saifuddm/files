@@ -1,23 +1,23 @@
 {
   "name": "files",
-  "module": "index.ts",
-  "type": "module",
   "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "watcher": "bun run ./apps/watcher/src/index.ts",
+    "worker": "bun run ./apps/worker/src/index.ts",
+    "worker:scratch": "bun run ./apps/worker/src/scratch.ts",
+    "db:push": "bunx drizzle-kit push",
+    "typecheck": "bunx tsc -p tsconfig.json --noEmit"
+  },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/pg": "^8.18.0",
     "drizzle-kit": "^0.31.9",
-    "tsx": "^4.21.0"
-  },
-  "peerDependencies": {
+    "tsx": "^4.21.0",
     "typescript": "^5"
-  },
-  "dependencies": {
-    "bullmq": "^5.70.1",
-    "chokidar": "^5.0.0",
-    "dotenv": "^17.3.1",
-    "drizzle-orm": "^0.45.1",
-    "ollama": "^0.6.3",
-    "pg": "^8.19.0"
   }
 }
