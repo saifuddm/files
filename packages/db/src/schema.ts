@@ -11,8 +11,8 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-const scanStatusEnum = pgEnum("scan_status", scanStatuses);
-const fileContextStatusEnum = pgEnum(
+export const scanStatusEnum = pgEnum("scan_status", scanStatuses);
+export const fileContextStatusEnum = pgEnum(
   "file_context_status",
   fileContextStatuses,
 );
