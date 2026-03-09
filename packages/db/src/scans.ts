@@ -27,6 +27,7 @@ function getScanName(path: string) {
   return basename(path) || path;
 }
 
+// TODO: see if this would be better as just a single path instead of an array of paths
 export async function addScanPaths(props: AddScanPathsProps[]) {
   const now = new Date();
   const scans: (typeof scansTable.$inferInsert)[] = props.map((prop) => ({
@@ -44,10 +45,25 @@ export async function addScanPaths(props: AddScanPathsProps[]) {
   const result = await db
     .insert(scansTable)
     .values(scans)
-    .onConflictDoNothing({ target: scansTable.path })
+    .onConflictDoUpdate({
+      target: scansTable.path,
+      set: {
+        approvedAt: now,
+        updatedAt: now,
+        status: "pending",
+      },
+    })
     .returning();
 
+  console.log("Scans:", result);
+
   for (const scan of result) {
+    console.log("Scans Event being sent:", {
+      scanId: scan.id,
+      event: "init",
+      path: scan.path,
+      ignored: scan.ignored || [],
+    });
     await scanQueue.add("scan-init", {
       scanId: scan.id,
       event: "init",

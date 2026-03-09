@@ -1,4 +1,4 @@
-import { readdir } from "node:fs/promises";
+import { readdir, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { Job, Queue, Worker } from "bullmq";
 import IORedis from "ioredis";
@@ -43,20 +43,43 @@ export const scanWorker = new Worker(
       },
     );
 
-    const entryDetails = entries.map((entry) => {
-      const entryPath = join(job.data.path, entry.name);
-      const ignored = ignoredPatterns.some(
-        (pattern: RegExp) =>
-          pattern.test(entry.name) || pattern.test(entryPath),
-      );
+    const entryDetails = await Promise.all(
+      entries.map(async (entry) => {
+        const entryPath = join(job.data.path, entry.name);
+        const ignored = ignoredPatterns.some(
+          (pattern: RegExp) =>
+            pattern.test(entry.name) || pattern.test(entryPath),
+        );
 
-      return {
-        name: entry.name,
-        ignored,
-        isFile: entry.isFile(),
-        isDirectory: entry.isDirectory(),
-      };
-    });
+        if (ignored) {
+          return {
+            name: entry.name,
+            ignored,
+            isFile: false,
+            isDirectory: false,
+          };
+        }
+
+        try {
+          const entryStats = await stat(entryPath);
+
+          return {
+            name: entry.name,
+            ignored,
+            isFile: entryStats.isFile(),
+            isDirectory: entryStats.isDirectory(),
+          };
+        } catch (error) {
+          console.warn(`Could not stat ${entryPath}:`, error);
+          return {
+            name: entry.name,
+            ignored: true,
+            isFile: false,
+            isDirectory: false,
+          };
+        }
+      }),
+    );
 
     const files = entryDetails
       .filter((entry) => entry.isFile && !entry.ignored)
